@@ -8,6 +8,7 @@ const parser = require('debug').enabled
   : require('./parser')
 
 const {
+  initializeDB,
   addFilesContentsToHash,
   args,
   createFilesHash,
@@ -24,6 +25,7 @@ const {
 // #region Program
 
 const program = pipe(
+  initializeDB(),
   processAllGlobPatterns,
   // since globpatterns are inserted as multiple arrays.
   flatten,

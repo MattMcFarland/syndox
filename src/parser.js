@@ -6,13 +6,12 @@ import { path as objPath } from 'ramda'
 import cosmiconfig from 'cosmiconfig'
 import { resolve as resolvePath } from 'path'
 import { parse as parseAST } from 'babylon'
-import mkdirp from 'mkdirp'
 import json from 'big-json'
 import fs from 'fs'
 import shortid from 'shortid'
 // $FlowFixMe
 import glob from 'glob'
-import db from './db'
+import initDB from './db'
 
 // $FlowFixMe
 import { Transform } from 'stream'
@@ -32,11 +31,16 @@ type keys = K[]
 type FileHash = {
   fullPath: string,
   index: string,
-  data: string
+  data: string,
+  id: string,
+  ast: string
 }
 //# endregion
 
 // #region Unary Functions
+
+export const fromDB = (key:K) => cache.get('db').get(key).value()
+export const toDB = (key:K, value:V) => cache.get('db').get(key).assign(value).write()
 
 /**
  * Removes duplicates from the given array
@@ -125,11 +129,12 @@ export const readFiles = (filesArray:string[]) => Promise.all(filesArray.map(saf
 
 
 export const getFullPathsFromFileHash = (filehash:FileHash) => Promise.all(Object.values(filehash).map(({fullPath}:V) => fullPath))
-export const getFileHashFromDB = () => db.get('files').value()
+export const getFileHashFromDB = () => fromDB('files')
 
 export const saveContextToFileHash = (context:any) => {
-  return db.get('files').assign(context).write()
+  return toDB('files', context)
 }
+
 export const appendContextAsKeysToFileHash = (keyToAppend:string) => (context:any) => {
   const fileHash = getFileHashFromDB()
   return Object.entries(fileHash).reduce((hash, [key, value]:entry) => {
@@ -210,8 +215,8 @@ export const createFilesHash = (filepaths: string[]) => {
 /**
  * Runs the process of pulling all file definitions from the database, then reading their data.
  */
-export const generateASTs = () => {
-  const fileHash = db.get('files').value()
+export const generateASTs = () => {  
+  const fileHash = fromDB('files')
   const withAST = Object.entries(fileHash).reduce((hash, [key, value]:entry) => {
     return Object.assign(hash, {
       [key]: {
@@ -220,7 +225,6 @@ export const generateASTs = () => {
       }
     })
   }, {})
-  console.dir(withAST)
 }
 
 export const readConfig = () =>
@@ -242,6 +246,12 @@ export const bootstrapConfig = () =>
   readConfig()
   .then(assignContextToCache('config'))
 
+export const initializeDB = () => (context:any):Promise<any> => 
+  new Promise(resolve => {
+    initDB().then(assignContextToCache('db')).then(() => resolve(context))
+})
+    
+    
 // export const streamAST = ast => {
 //   return new Promise((resolve, reject) => {
 //     const stringifyWriteTransform = new Transform({
