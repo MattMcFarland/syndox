@@ -1,19 +1,40 @@
-import { MODULE_NAME } from './constants'
-import cosmiconfig from 'cosmiconfig'
-import cache from './cache'
+// @flow
 
-const { promisify } = require('util')
-const { resolve: resolvePath } = require('path')
-const { parse: parseAST } = require('babylon')
-const { Transform } = require('stream')
-const mkdirp = require('mkdirp')
-const path = require('path')
-const json = require('big-json')
-const fs = require('fs')
-const shortid = require('shortid')
+import { MODULE_NAME } from './constants'
+import cache from './cache'
+import { path as objPath } from 'ramda'
+import cosmiconfig from 'cosmiconfig'
+import { resolve as resolvePath } from 'path'
+import { parse as parseAST } from 'babylon'
+import mkdirp from 'mkdirp'
+import json from 'big-json'
+import fs from 'fs'
+import shortid from 'shortid'
+// $FlowFixMe
+import glob from 'glob'
+import db from './db'
+
+// $FlowFixMe
+import { Transform } from 'stream'
+// $FlowFixMe
+import { promisify } from 'util'
+
+// $FlowFixMe
 const readFile = promisify(fs.readFile)
-const glob = require('glob')
-const db = require('./db')
+
+//# region Type Definitions
+type K = string
+type V = any
+type entry = [K, V]
+type entries = entry[]
+type values = V[]
+type keys = K[]
+type FileHash = {
+  fullPath: string,
+  index: string,
+  data: string
+}
+//# endregion
 
 // #region Unary Functions
 
@@ -21,20 +42,20 @@ const db = require('./db')
  * Removes duplicates from the given array
  * @param {Array} arr dedupe this array
  */
-const dedupe = arr => arr.reduce((x, y) => x.includes(y) ? x : [...x, y], [])
+export const dedupe = (arr:any[]) => arr.reduce((x, y) => x.includes(y) ? x : [...x, y], [])
 
 /**
  * Flattens an array that is one level deep.
  * @param {Array} arr flatten this array
  */
-const flatten = arr => [].concat(...arr)
+export const flatten = (arr:any[]) => [].concat(...arr)
 
 /**
  * create AST of given code
  * @param {string} code - code will be converted to AST
  * @returns {object} Abstract Syntax Tree
  */
-const parseCode = code => parseAST(code)
+export const parseCode = (code:string) => parseAST(code)
 
 /**
  * Parse an array of code
@@ -42,14 +63,14 @@ const parseCode = code => parseAST(code)
  * @returns {object[]} Array of Abstract Syntax Trees
  * @uses parseCode
  */
-const parseCodeArray = codeArray => codeArray.map(parseCode)
+export const parseCodeArray = (codeArray:string[]) => codeArray.map(parseCode)
 
 /**
  * Logs the current context to the console
  * @param {*} data log this
  * @returns {*} data
  */
-const logContext = (data) => {
+export const logContext = (data:any) => {
   console.log('ctx', data)
   return data
 }
@@ -57,26 +78,25 @@ const logContext = (data) => {
  * Send a status message while in a promise chain
  * @param {string} msg
  */
-const status = msg => data => {
+export const status = (msg:string) => (context:any) => {
   console.log('status', msg)
-  return data
+  return context
 }
 
 /**
  * Changes context in promise chain
  * @param {*} newContext next thing in promise chain will focus on this
  */
-const setContext = newContext => _ => {
-  return Promise.resolve(newContext)
-}
+export const setContext = (newContext:any) => ():Promise<any> => 
+  Promise.resolve(newContext)
 
 /**
  * Only attempts to read real files, discarding directories, etc.
  * @param {string} filepath path to be read by fs.readFile
- * @returns {Promise<string>} A promise of the file contents.
+ * @returns {Promise<entry>} A promise of the file contents.
  * @see readFiles
  */
-const safelyReadFile = filepath => {
+export const safelyReadFile = (filepath:string):Promise<entry> => {
   return new Promise((resolve, reject) => {
     fs.stat(filepath, (err, stats) => {
       if (err) return reject(err)
@@ -87,7 +107,7 @@ const safelyReadFile = filepath => {
         })
       }
       console.warn('skip', filepath)
-      return resolve('')
+      return
     })
   })
 }
@@ -98,29 +118,31 @@ const safelyReadFile = filepath => {
  * @returns {Promise<string[]>} - A promise when all files have been read
  * @uses safelyReadFile
  */
-const readFiles = filesArray => Promise.all(filesArray.map(safelyReadFile))
+export const readFiles = (filesArray:string[]) => Promise.all(filesArray.map(safelyReadFile))
 
-// const addEntryToFileHash = ([key, value]) => db.get('files').assign({[key]: value}).write()
-// const addEntriesToFileHash = (entries) => Promise.all(entries.map(addEntryToFileHash))
-const getFullPathsFromFileHash = fileHash => Promise.all(Object.values(fileHash).map(({fullPath}) => fullPath))
-const getFileHashFromDB = () => db.get('files').value()
+// export const addEntryToFileHash = ([key, value]) => db.get('files').assign({[key]: value}).write()
+// export const addEntriesToFileHash = (entries) => Promise.all(entries.map(addEntryToFileHash))
 
-const saveContextToFileHash = context => {
+
+export const getFullPathsFromFileHash = (filehash:FileHash) => Promise.all(Object.values(filehash).map(({fullPath}:V) => fullPath))
+export const getFileHashFromDB = () => db.get('files').value()
+
+export const saveContextToFileHash = (context:any) => {
   return db.get('files').assign(context).write()
 }
-const appendContextAsKeysToFileHash = keyToAppend => context => {
+export const appendContextAsKeysToFileHash = (keyToAppend:string) => (context:any) => {
   const fileHash = getFileHashFromDB()
-  return Object.entries(fileHash).reduce((hash, [key, value]) => {
+  return Object.entries(fileHash).reduce((hash, [key, value]:entry) => {
     const fullPath = value.fullPath
     value.data = context[fullPath]
     return hash
   }, {})
 }
-const convertEntriesToObject = entries => {
+export const convertEntriesToObject = (entries:entries) => {
   return entries.reduce((obj, [ key, value ]) => ({ ...obj, [key]: value }), {})
 }
 
-const addFilesContentsToHash = () =>
+export const addFilesContentsToHash = ():Promise<any> =>
   Promise.resolve(getFileHashFromDB())
     .then(getFullPathsFromFileHash)
     .then(logContext)
@@ -132,7 +154,7 @@ const addFilesContentsToHash = () =>
  * Logs error, exits 1
  * @param {Error} err error object
  */
-const fatalError = err => {
+export const fatalError = (err:Error) => {
   console.error(err)
   process.exit(1)
 }
@@ -140,42 +162,42 @@ const fatalError = err => {
 /**
  * Processes a glob pattern to an array of files
  * @param {string} pattern pattern to resolve
- * @returns {Promise<...string[]>} all matches found from the pattern
+ * @returns {Promise<string[]>} all matches found from the pattern
  * @throws {Error} If nothing is found
  * @see processGlobPattern
  */
-const processGlobPattern = pattern => {
-  return new Promise((resolve, reject) => {
+export const processGlobPattern = (pattern:string):Promise<string[]> => 
+  new Promise((resolve, reject) => {
     glob(pattern, (err, matches) => {
       if (err) return reject(err)
       return resolve(matches)
     })
   })
-}
 
-const processAllGlobPatterns = patterns => Promise.all(patterns.map(processGlobPattern))
+
+export const processAllGlobPatterns = (patterns:string[]) => Promise.all(patterns.map(processGlobPattern))
 
 /**
  * Converts resolves the full path of the filepath relative to the current working directory.
  * @param {string} relativePath filepath to resolve
  */
-const resolvePathFromCWD = relativePath => resolvePath(process.cwd(), relativePath)
+export const resolvePathFromCWD = (relativePath:string) => resolvePath(process.cwd(), relativePath)
 
 /**
  * Resolves the full path all file patterns relative to the current working directory.
  * @param {string[]} relativePaths array of relative filepaths to resolve
  * @uses resolvePathFromCWD
  */
-const resolveAllFilePathsFromCWD = relativePaths => relativePaths.map(resolvePathFromCWD)
+export const resolveAllFilePathsFromCWD = (relativePaths:string[]) => relativePaths.map(resolvePathFromCWD)
 
-// const cacheFullFilePath = filePath => cache.get(`files.${filePath}`).assign({ fullPath })
+// export const cacheFullFilePath = filePath => cache.get(`files.${filePath}`).assign({ fullPath })
 
 /**
  * Creates base filehash for further read/writes, which will include fullpath and rel-path
  * @param {string[]} filepaths - relative paths, full paths will be added to them.
  * @returns {FileHash}
  */
-const createFilesHash = filepaths => {
+export const createFilesHash = (filepaths: string[]) => {
   return filepaths.reduce((hash, filepath) => Object.assign(hash, {
     [filepath]: {
       fullPath: resolvePathFromCWD(filepath),
@@ -188,9 +210,9 @@ const createFilesHash = filepaths => {
 /**
  * Runs the process of pulling all file definitions from the database, then reading their data.
  */
-const generateASTs = () => {
+export const generateASTs = () => {
   const fileHash = db.get('files').value()
-  const withAST = Object.entries(fileHash).reduce((hash, [key, value]) => {
+  const withAST = Object.entries(fileHash).reduce((hash, [key, value]:entry) => {
     return Object.assign(hash, {
       [key]: {
         ast: safelyReadFile(value.fullPath),
@@ -201,21 +223,26 @@ const generateASTs = () => {
   console.dir(withAST)
 }
 
-const readConfig = () =>
+export const readConfig = () =>
   cosmiconfig(MODULE_NAME)
+  .then(result => result.config)
 
-const assignContextToCache = key => context => {
+export const assignContextToCache = (key:K) => (context:any) => {
   cache.set(key, context)
   return context
 }
 
-const fromCacheToContext = key => _ => cache.get(key)
+export const fromCacheToContext = (key:string) => () => cache.get(key)
 
-const fromConfig = key => _ =>
-  Promise.resolve(assignContextToCache('config'))
-  .then(cosmic => cosmic.config[key])
+export const fromConfig = (keyOrPathToKey:string) => ():Promise<any> =>
+  Promise.resolve(fromCacheToContext('config'))
+  .then(config => objPath(keyOrPathToKey.split('.'), config))
 
-// const streamAST = ast => {
+export const bootstrapConfig = () =>
+  readConfig()
+  .then(assignContextToCache('config'))
+
+// export const streamAST = ast => {
 //   return new Promise((resolve, reject) => {
 //     const stringifyWriteTransform = new Transform({
 //       writableObjectMode: true,
@@ -245,7 +272,7 @@ const fromConfig = key => _ =>
 //   })
 // }
 
-// const writeASTs = asts => Promise.all(asts.map(streamAST))
+// export const writeASTs = asts => Promise.all(asts.map(streamAST))
 
 // endregion Unary Functions
 
@@ -254,30 +281,7 @@ const fromConfig = key => _ =>
 /**
  * @property {string[]} args passed from the command line to this program
  */
-const args = process.argv.slice(2)
+export const args = process.argv.slice(2)
 
 // #endregion Declarations
 
-module.exports = {
-  dedupe,
-  flatten,
-  parseCode,
-  parseCodeArray,
-  logContext,
-  safelyReadFile,
-  readFiles,
-  fatalError,
-  setContext,
-  processGlobPattern,
-  processAllGlobPatterns,
-  resolvePathFromCWD,
-  resolveAllFilePathsFromCWD,
-  status,
-  args,
-  createFilesHash,
-  generateASTs,
-  addFilesContentsToHash,
-  saveContextToFileHash,
-  readConfig,
-  fromCacheToContext
-}

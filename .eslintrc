@@ -1,0 +1,12 @@
+{
+  "parser": "babylon",
+  "plugins": ["eslint-plugin-flowtype"],
+  "parserOptions": {
+    "ecmaVersion": 7,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "spread": true,
+      "experimentalObjectRestSpread": true
+    }
+  }
+}

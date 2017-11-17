@@ -1,0 +1,10 @@
+[include]
+./src/*
+
+[ignore]
+.*/docs/.*
+./src/logger.js
+
+[libs]
+
+.*/node_modules/.*

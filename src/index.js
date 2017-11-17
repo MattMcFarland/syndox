@@ -8,15 +8,15 @@ const parser = require('debug').enabled
   : require('./parser')
 
 const {
-  dedupe,
-  flatten,
-  fatalError,
-  processAllGlobPatterns,
-  createFilesHash,
+  addFilesContentsToHash,
   args,
-  status,
+  createFilesHash,
+  dedupe,
+  fatalError,
+  flatten,
+  processAllGlobPatterns,
   saveContextToFileHash,
-  addFilesContentsToHash
+  status
 } = parser
 
 // #endRegion Initialization
