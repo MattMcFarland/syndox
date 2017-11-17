@@ -1,0 +1,16 @@
+{
+  "plugins": [
+    "@babel/plugin-proposal-object-rest-spread"
+  ],
+  "presets": [
+    "@babel/flow",
+    [
+      "@babel/env",
+      {
+        "targets": {
+          "node": "current"
+        }
+      }
+    ]
+  ]
+}

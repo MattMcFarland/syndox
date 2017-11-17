@@ -1,3 +1,7 @@
+import { MODULE_NAME } from './constants'
+import cosmiconfig from 'cosmiconfig'
+import cache from './cache'
+
 const { promisify } = require('util')
 const { resolve: resolvePath } = require('path')
 const { parse: parseAST } = require('babylon')
@@ -65,6 +69,7 @@ const status = msg => data => {
 const setContext = newContext => _ => {
   return Promise.resolve(newContext)
 }
+
 /**
  * Only attempts to read real files, discarding directories, etc.
  * @param {string} filepath path to be read by fs.readFile
@@ -196,6 +201,20 @@ const generateASTs = () => {
   console.dir(withAST)
 }
 
+const readConfig = () =>
+  cosmiconfig(MODULE_NAME)
+
+const assignContextToCache = key => context => {
+  cache.set(key, context)
+  return context
+}
+
+const fromCacheToContext = key => _ => cache.get(key)
+
+const fromConfig = key => _ =>
+  Promise.resolve(assignContextToCache('config'))
+  .then(cosmic => cosmic.config[key])
+
 // const streamAST = ast => {
 //   return new Promise((resolve, reject) => {
 //     const stringifyWriteTransform = new Transform({
@@ -258,5 +277,7 @@ module.exports = {
   createFilesHash,
   generateASTs,
   addFilesContentsToHash,
-  saveContextToFileHash
+  saveContextToFileHash,
+  readConfig,
+  fromCacheToContext
 }

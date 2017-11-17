@@ -3,20 +3,36 @@
   "version": "0.0.0",
   "main": "index.js",
   "license": "MIT",
+  "files": [
+    "README.md",
+    "docs",
+    "lib"
+  ],
   "scripts": {
-    "test": "rm -rf out && mkdir out && node lib/index.js **/*.js",
+    "clean": "rm -rf out docs lib && mkdir docs lib",
+    "prebuild": "yarn clean",
+    "build": "babel src --out-dir lib --ignore spec.js,test.js",
+    "docs": "node lib/index.js **/*.js",
+    "predebug": "yarn build",
+    "debug": "DEBUG=syndox* node lib/index.js **/*.js",
+    "prepublishOnly": "yarn build && yarn docs",
     "lint": "standard lib | snazzy"
   },
   "keywords": [],
   "author": "Matt McFarland <contact@mattmcfarland.com>",
   "description": "Documentation from syntax",
   "devDependencies": {
-    "babylon": "^6.18.0",
+    "@babel/cli": "^7.0.0-beta.32",
+    "@babel/core": "^7.0.0-beta.32",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.32",
+    "@babel/preset-env": "^7.0.0-beta.32",
+    "@babel/preset-flow": "^7.0.0-beta.32",
     "snazzy": "^7.0.0",
     "standard": "^10.0.3"
   },
   "dependencies": {
     "big-json": "^1.2.0",
+    "cosmiconfig": "^3.1.0",
     "glob": "^7.1.2",
     "lowdb": "^1.0.0",
     "mkdirp": "^0.5.1",
