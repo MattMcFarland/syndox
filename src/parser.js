@@ -36,6 +36,7 @@ type FileHashItem = {
 /** @typedef AST Abstract Syntax Tree */
 type AST = { ...AST }
 /** @typedef Passthrough returns the original context */
+
 type Passthrough = (any: any) => any
 type Fn = (any: any) => any
 type Config = {
