@@ -9,16 +9,10 @@ import { parse as parseAST } from 'babylon'
 import json from 'big-json'
 import fs from 'fs'
 import shortid from 'shortid'
-// $FlowFixMe
 import glob from 'glob'
 import initDB from './db'
-
-// $FlowFixMe
 import { Transform } from 'stream'
-// $FlowFixMe
 import { promisify } from 'util'
-
-// $FlowFixMe
 const readFile = promisify(fs.readFile)
 
 // #region Type Definitions
