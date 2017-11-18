@@ -2,7 +2,7 @@
   "out": "docs",
   "parse": {
     "options": {
-      "sourceType": "module",
+      "sourceType": "unambiguous",
       "plugins": ["flow", "objectRestSpread"]
     }
   }
