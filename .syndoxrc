@@ -1,3 +1,9 @@
 {
-  "out": "docs"
+  "out": "docs",
+  "parse": {
+    "options": {
+      "sourceType": "module",
+      "plugins": ["flow", "objectRestSpread"]
+    }
+  }
 }

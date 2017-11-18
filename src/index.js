@@ -11,6 +11,7 @@ const parser = require('debug').enabled
   : require('./parser')
 
 const {
+  initializeConfig,
   initializeDB,
   addFilesContentsToHash,
   args,
@@ -30,6 +31,7 @@ const {
 // #region Program
 
 const program = pipe(
+  initializeConfig(),
   initializeDB(),
   processAllGlobPatterns,
   // since globpatterns are inserted as multiple arrays.

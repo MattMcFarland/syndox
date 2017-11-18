@@ -13,6 +13,7 @@ import glob from 'glob'
 import initDB from './db'
 import { Transform } from 'stream'
 import { promisify } from 'util'
+import pipe from 'promise.pipe'
 
 const readFile = promisify(fs.readFile)
 
@@ -74,11 +75,21 @@ export const toDB = (key: K, value: V): Promise<void> =>
   )
 
 /**
+ * Gets the value from the keyPath
+ * @param {string} keyPath foo, foo.bar, foo.bar.baz
+ * @returns {V} value
+ */
+export const fromConfig = (keyPath: string): V => {
+  const config = cache.get('config')
+  return objPath(keyPath.split('.'), config)
+}
+
+/**
  * Removes duplicates from the given array
  * @param {Array} arr dedupe this array
  * @returns {Array} deduped
  */
-export const dedupe = (arr: any[]): any[] =>
+export const dedupe = (arr: Array<any>): Array<any> =>
   arr.reduce((x, y) => (x.includes(y) ? x : [...x, y]), [])
 
 /**
@@ -86,7 +97,7 @@ export const dedupe = (arr: any[]): any[] =>
  * @param {Array} arr flatten this array
  * @returns {Array} deduped
  */
-export const flatten = (arr: any[]): any[] => [].concat(...arr)
+export const flatten = (arr: Array<any>): Array<any> => [].concat(...arr)
 
 /**
  * create AST of given code
@@ -94,10 +105,7 @@ export const flatten = (arr: any[]): any[] => [].concat(...arr)
  * @returns {AST} Abstract Syntax Tree
  */
 export const parseCode = (code: string): AST =>
-  parseAST(code, {
-    sourceType: 'module',
-    plugins: ['flow', 'objectRestSpread'],
-  })
+  parseAST(code, fromConfig('parse.options'))
 
 /**
  * Parse an array of code
@@ -417,32 +425,15 @@ export const assignContextToCache = (key: K) => (context: any) => {
 export const fromCacheToContext = (key: string) => () => cache.get(key)
 
 /**
- * Retrieves a config value, sets it as context
- * @param {string} keyOrPathToKey
- * @returns {Promise<V>} value
- */
-export const fromConfig = (keyOrPathToKey: string) => (): Promise<V> =>
-  Promise.resolve(fromCacheToContext('config')).then(config =>
-    objPath(keyOrPathToKey.split('.'), config)
-  )
-
-/**
  * Read config vars from .syndoxrc or package.json, return results
  * @returns {Promise<Config>}
  */
 export const readConfig = (): Promise<Config> =>
-  cosmiconfig(MODULE_NAME)
-    .load()
-    .then(result => result.config)
-
-/**
- * Reads Config then caches it as 'config' in cache map
- * @returns {Promise<Config>}
- */
-
-export const readConfigToCache = (): Passthrough => (
-  context: any
-): Promise<any> => readConfig().then(assignContextToCache('config'))
+  new Promise(resolve => {
+    cosmiconfig(MODULE_NAME)
+      .load(process.cwd())
+      .then(result => resolve(result.config))
+  })
 
 /**
  * Initiailize the DB
@@ -455,11 +446,24 @@ export const initializeDB = (): Passthrough => (context: any): Promise<any> =>
       .then(() => resolve(context))
   })
 
+/**
+ * Initiailize the Config
+ * @returns {Passthrough} - context of the promise chain is unchanged.
+ */
+export const initializeConfig = (): Passthrough => (
+  context: any
+): Promise<any> =>
+  new Promise(resolve => {
+    readConfig()
+      .then(assignContextToCache('config'))
+      .then(() => resolve(context))
+  })
+
 // export const streamAST = ast => {
 //   return new Promise((resolve, reject) => {
 //     const stringifyWriteTransform = new Transform({
 //       writableObjectMode: true,
-//       readableObjectMode: true,
+//       readableObjectMode: initializeConfigtrue,
 //       transform: function (chunk, encoding, transformCallback) {
 //         const fullPath = path.resolve('out', `ast/${chunk.filePath}.json`)
 //         mkdirp(fullPath.split('/').slice(0, -1).join('/'), (err) => {
