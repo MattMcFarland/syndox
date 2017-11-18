@@ -16,7 +16,7 @@
     "prettier": "prettier --write src/*.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc}"
   },
   "lint-staged": {
-    "*.{js,json,css}": ["flow", "prettier --write", "git add"]
+    "src/*.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc": ["prettier --write", "git add"]
   },
   "keywords": [],
   "author": "Matt McFarland <contact@mattmcfarland.com>",
