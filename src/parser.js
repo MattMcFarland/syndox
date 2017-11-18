@@ -1,22 +1,22 @@
 // @flow
 
-import { MODULE_NAME } from "./constants"
-import cache from "./cache"
-import { path as objPath } from "ramda"
-import cosmiconfig from "cosmiconfig"
-import { resolve as resolvePath } from "path"
-import { parse as parseAST } from "babylon"
-import json from "big-json"
-import fs from "fs"
-import shortid from "shortid"
+import { MODULE_NAME } from './constants'
+import cache from './cache'
+import { path as objPath } from 'ramda'
+import cosmiconfig from 'cosmiconfig'
+import { resolve as resolvePath } from 'path'
+import { parse as parseAST } from 'babylon'
+import json from 'big-json'
+import fs from 'fs'
+import shortid from 'shortid'
 // $FlowFixMe
-import glob from "glob"
-import initDB from "./db"
+import glob from 'glob'
+import initDB from './db'
 
 // $FlowFixMe
-import { Transform } from "stream"
+import { Transform } from 'stream'
 // $FlowFixMe
-import { promisify } from "util"
+import { promisify } from 'util'
 
 // $FlowFixMe
 const readFile = promisify(fs.readFile)
@@ -36,7 +36,7 @@ type FileHashItem = {
   data: string,
   fullPath: string,
   id: string,
-  index: string
+  index: string,
 }
 /** @typedef AST Abstract Syntax Tree */
 type AST = { ...AST }
@@ -44,7 +44,7 @@ type AST = { ...AST }
 type Passthrough = (any: any) => any
 type Fn = (any: any) => any
 type Config = {
-  out: string
+  out: string,
 }
 // #endregion Type Definitions
 
@@ -57,7 +57,7 @@ type Config = {
  */
 export const fromDB = (key: K): V =>
   cache
-    .get("db")
+    .get('db')
     .get(key)
     .value()
 /**
@@ -69,7 +69,7 @@ export const fromDB = (key: K): V =>
 export const toDB = (key: K, value: V): Promise<void> =>
   Promise.resolve(
     cache
-      .get("db")
+      .get('db')
       .get(key)
       .assign(value)
       .write()
@@ -80,8 +80,7 @@ export const toDB = (key: K, value: V): Promise<void> =>
  * @param {Array} arr dedupe this array
  * @returns {Array} deduped
  */
-export const dedupe = (arr: any[]): any[] =>
-  arr.reduce((x, y) => (x.includes(y) ? x : [...x, y]), [])
+export const dedupe = (arr: any[]): any[] => arr.reduce((x, y) => (x.includes(y) ? x : [...x, y]), [])
 
 /**
  * Flattens an array that is one level deep.
@@ -111,7 +110,7 @@ export const parseCodeArray = (codeArray: string[]): AST[] => codeArray.map(pars
  * @returns {*} context
  */
 export const logContext = (context: any): any => {
-  console.log("ctx", context)
+  console.log('ctx', context)
   return context
 }
 
@@ -121,7 +120,7 @@ export const logContext = (context: any): any => {
  * @returns {Passthrough} - context of the promise chain is unchanged.
  */
 export const status = (msg: string): Passthrough => (context: any): any => {
-  console.log("status", msg)
+  console.log('status', msg)
   return context
 }
 
@@ -148,12 +147,12 @@ export const safelyReadFile = (filepath: string): Promise<entry> => {
     fs.stat(filepath, (err, stats) => {
       if (err) return reject(err)
       if (stats.isFile()) {
-        console.log("read", filepath)
-        return readFile(filepath, "utf-8").then(data => {
+        console.log('read', filepath)
+        return readFile(filepath, 'utf-8').then(data => {
           resolve([filepath, data])
         })
       }
-      console.warn("skip", filepath)
+      console.warn('skip', filepath)
       return
     })
   })
@@ -165,8 +164,7 @@ export const safelyReadFile = (filepath: string): Promise<entry> => {
  * @returns {Promise<string[]>} - A promise when all files have been read
  * @uses safelyReadFile
  */
-export const readFiles = (filesArray: string[]): Promise<entry[]> =>
-  Promise.all(filesArray.map(safelyReadFile))
+export const readFiles = (filesArray: string[]): Promise<entry[]> => Promise.all(filesArray.map(safelyReadFile))
 
 /**
  * Gets the fullPath property from each entry in the filehash
@@ -180,24 +178,21 @@ export const getFullPathsFromFileHash = (filehash: FileHash[]): Promise<string[]
  * Retrieves the FileHash from the db
  * @returns {FileHash[]}
  */
-export const getFileHashFromDB = (): FileHash[] => fromDB("files")
+export const getFileHashFromDB = (): FileHash[] => fromDB('files')
 
 /**
  * Saves the current context of promise chain to the fileHash[] in the DB
  * @param {any} context
  * @returns {Passthrough} - context of the promise chain is unchanged.
  */
-export const saveContextToFileHash = (context: any): Promise<Passthrough> =>
-  toDB("files", context).then(() => context)
+export const saveContextToFileHash = (context: any): Promise<Passthrough> => toDB('files', context).then(() => context)
 
 /**
  * Saves the current context of promise chain to the fileHash[]
  * @param {string} keyToAppend
  * @returns {Passthrough} - context of the promise chain is unchanged.
  */
-export const appendContextAsKeysToFileHash = (keyToAppend: string): Passthrough => (
-  context: any
-): any => {
+export const appendContextAsKeysToFileHash = (keyToAppend: string): Passthrough => (context: any): any => {
   const fileHash = getFileHashFromDB()
   return Promise.resolve(
     Object.entries(fileHash).reduce((hash, [key, value]: entry) => {
@@ -229,7 +224,7 @@ export const addFilesContentsToHash = (): Promise<any> =>
     .then(getFullPathsFromFileHash)
     .then(readFiles)
     .then(convertEntriesToObject)
-    .then(appendContextAsKeysToFileHash("data"))
+    .then(appendContextAsKeysToFileHash('data'))
     .then(voidContext)
 
 /**
@@ -271,7 +266,7 @@ export const processAllGlobPatterns = (patterns: string[]): Promise<string[]> =>
  * @param {string} relativePath filepath to resolve
  * @returns {string} fullpath
  */
-export const resolvePathFromCWD = (relativePath: string): $PropertyType<FileHashItem, "fullpath"> =>
+export const resolvePathFromCWD = (relativePath: string): $PropertyType<FileHashItem, 'fullpath'> =>
   resolvePath(process.cwd(), relativePath)
 
 /**
@@ -280,8 +275,7 @@ export const resolvePathFromCWD = (relativePath: string): $PropertyType<FileHash
  * @returns {string[]} fullpaths
  * @uses resolvePathFromCWD
  */
-export const resolveAllFilePathsFromCWD = (relativePaths: string[]): string[] =>
-  relativePaths.map(resolvePathFromCWD)
+export const resolveAllFilePathsFromCWD = (relativePaths: string[]): string[] => relativePaths.map(resolvePathFromCWD)
 
 /**
  * Creates base filehash for further read/writes, which will include fullpath and rel-path
@@ -292,7 +286,7 @@ export const createFilesHash = (filepaths: string[]): FileHash =>
   filepaths.reduce(
     (hash: any, filepath) =>
       Object.assign(hash, {
-        [filepath]: createFileHashItem(filepath)
+        [filepath]: createFileHashItem(filepath),
       }),
     {}
   )
@@ -305,21 +299,21 @@ export const createFileHashItem = (filepath: string): FileHashItem => ({
   fullPath: resolvePathFromCWD(filepath),
   index: filepath,
   id: shortid.generate(),
-  data: "",
-  ast: {}
+  data: '',
+  ast: {},
 })
 
 /**
  * Runs the process of pulling all file definitions from the database, then reading their data.
  */
 export const generateASTs = () => {
-  const fileHash = fromDB("files")
+  const fileHash = fromDB('files')
   const withAST = Object.entries(fileHash).reduce((hash, [key, value]: entry) => {
     return Object.assign(hash, {
       [key]: {
         ast: safelyReadFile(value.fullPath),
-        ...value
-      }
+        ...value,
+      },
     })
   }, {})
 }
@@ -347,9 +341,7 @@ export const fromCacheToContext = (key: string) => () => cache.get(key)
  * @returns {Promise<V>} value
  */
 export const fromConfig = (keyOrPathToKey: string) => (): Promise<V> =>
-  Promise.resolve(fromCacheToContext("config")).then(config =>
-    objPath(keyOrPathToKey.split("."), config)
-  )
+  Promise.resolve(fromCacheToContext('config')).then(config => objPath(keyOrPathToKey.split('.'), config))
 
 /**
  * Read config vars from .syndoxrc or package.json, return results
@@ -365,8 +357,7 @@ export const readConfig = (): Promise<Config> =>
  * @returns {Promise<Config>}
  */
 
-export const ReadConfigToCache = (): Promise<Config> =>
-  readConfig().then(assignContextToCache("config"))
+export const ReadConfigToCache = (): Promise<Config> => readConfig().then(assignContextToCache('config'))
 
 /**
  * Initiailize the DB
@@ -375,7 +366,7 @@ export const ReadConfigToCache = (): Promise<Config> =>
 export const initializeDB = (): Passthrough => (context: any): Promise<any> =>
   new Promise(resolve => {
     initDB()
-      .then(assignContextToCache("db"))
+      .then(assignContextToCache('db'))
       .then(() => resolve(context))
   })
 

@@ -1,9 +1,9 @@
-import { MODULE_NAME } from "./constants"
-import cosmiconfig from "cosmiconfig"
-import low from "lowdb"
-import FileSync from "lowdb/adapters/FileSync"
-import mkdirp from "mkdirp"
-import path from "path"
+import { MODULE_NAME } from './constants'
+import cosmiconfig from 'cosmiconfig'
+import low from 'lowdb'
+import FileSync from 'lowdb/adapters/FileSync'
+import mkdirp from 'mkdirp'
+import path from 'path'
 
 const config = cosmiconfig(MODULE_NAME)
 

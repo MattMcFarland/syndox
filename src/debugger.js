@@ -1,5 +1,5 @@
-const Debug = require("debug")
-const parser = require("./parser")
+const Debug = require('debug')
+const parser = require('./parser')
 
 /**
  * found this gem here: http://me.dt.in.th/page/JavaScript-override/
@@ -40,26 +40,26 @@ const Debugger = {
         return returnValue
       }
     }
-  }
+  },
 }
 
 module.exports = () => {
   Object.keys(parser).forEach(fn => {
-    if (typeof parser[fn] === "function") {
-      Debug("syndox:attach")(parser[fn])
+    if (typeof parser[fn] === 'function') {
+      Debug('syndox:attach')(parser[fn])
       Debugger.override(
         parser,
         fn,
         Debugger.before(f => {
-          if (!Array.isArray(fn)) console.log("status", fn + "()")
-          Debug("syndox:call")(fn, JSON.stringify(f))
+          if (!Array.isArray(fn)) console.log('status', fn + '()')
+          Debug('syndox:call')(fn, JSON.stringify(f))
         })
       )
       Debugger.override(
         parser,
         fn,
         Debugger.after(f => {
-          Debug("syndox:done")(fn)
+          Debug('syndox:done')(fn)
         })
       )
     }

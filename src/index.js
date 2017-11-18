@@ -1,9 +1,9 @@
 // #region Initialization
-const pipe = require("promise.pipe")
-const Logger = require("./logger")
+const pipe = require('promise.pipe')
+const Logger = require('./logger')
 Logger.start()
 
-const parser = require("debug").enabled ? require("./debugger")() : require("./parser")
+const parser = require('debug').enabled ? require('./debugger')() : require('./parser')
 
 const {
   initializeDB,
@@ -16,7 +16,7 @@ const {
   processAllGlobPatterns,
   saveContextToFileHash,
   status,
-  logContext
+  logContext,
 } = parser
 
 // #endRegion Initialization
@@ -37,7 +37,7 @@ const program = pipe(
 )
 
 program(args)
-  .then(status("end"))
+  .then(status('end'))
   .catch(fatalError)
 
 // #endregion Program
