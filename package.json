@@ -5,7 +5,7 @@
   "license": "MIT",
   "files": ["README.md", "docs", "lib"],
   "scripts": {
-    "precommit": "lint-staged",
+    "precommit": "flow && lint-staged",
     "clean": "rm -rf out docs lib && mkdir docs lib",
     "prebuild": "flow && yarn clean",
     "build": "babel src --out-dir lib --ignore spec.js,test.js",
@@ -13,10 +13,10 @@
     "predebug": "yarn build",
     "debug": "DEBUG=syndox* node lib/index.js **/*.js",
     "prepublishOnly": "yarn build && yarn docs && pkg-ok",
-    "prettier": "prettier --write *.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc}"
+    "prettier": "prettier --write src/*.{js,json}"
   },
   "lint-staged": {
-    "*.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc": ["prettier --write", "git add"]
+    "*.{js,json}": ["prettier --write", "git add"]
   },
   "keywords": [],
   "author": "Matt McFarland <contact@mattmcfarland.com>",
