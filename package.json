@@ -13,10 +13,10 @@
     "predebug": "yarn build",
     "debug": "DEBUG=syndox* node lib/index.js **/*.js",
     "prepublishOnly": "yarn build && yarn docs && pkg-ok",
-    "prettier": "prettier --write src/*.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc}"
+    "prettier": "prettier --write *.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc}"
   },
   "lint-staged": {
-    "src/*.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc": ["prettier --write", "git add"]
+    "*.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc": ["prettier --write", "git add"]
   },
   "keywords": [],
   "author": "Matt McFarland <contact@mattmcfarland.com>",
