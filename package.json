@@ -1,7 +1,7 @@
 {
   "name": "syndox",
   "version": "0.0.0",
-  "main": "index.js",
+  "main": "lib/index.js",
   "license": "MIT",
   "files": ["README.md", "docs", "lib"],
   "scripts": {
@@ -12,8 +12,8 @@
     "docs": "node lib/index.js **/*.js",
     "predebug": "yarn build",
     "debug": "DEBUG=syndox* node lib/index.js **/*.js",
-    "prepublishOnly": "yarn build && yarn docs",
-    "prettier": "prettier --write src/*.{js,json,css}"
+    "prepublishOnly": "yarn build && yarn docs && pkg-ok",
+    "prettier": "prettier --write src/*.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc}"
   },
   "lint-staged": {
     "*.{js,json,css}": ["prettier --write", "git add"]
@@ -30,6 +30,7 @@
     "flow-bin": "^0.59.0",
     "husky": "^0.14.3",
     "lint-staged": "^5.0.0",
+    "pkg-ok": "^1.1.0",
     "prettier": "^1.8.2"
   },
   "dependencies": {

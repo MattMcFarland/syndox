@@ -7,7 +7,10 @@ overrides:
 - files: "*.js"
   options:
     parser: flow
-- files: "*.json"
+- files: 
+    - "*.json"
+    - ".babelrc"
+    - ".syndoxrc"
   options:
     parser: json
 - files: ".prettierrc"
