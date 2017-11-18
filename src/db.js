@@ -1,3 +1,5 @@
+// @flow
+
 import { MODULE_NAME } from './constants'
 import cosmiconfig from 'cosmiconfig'
 import low from 'lowdb'
