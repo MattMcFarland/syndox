@@ -3,12 +3,9 @@
   "version": "0.0.0",
   "main": "index.js",
   "license": "MIT",
-  "files": [
-    "README.md",
-    "docs",
-    "lib"
-  ],
+  "files": ["README.md", "docs", "lib"],
   "scripts": {
+    "precommit": "lint-staged",
     "clean": "rm -rf out docs lib && mkdir docs lib",
     "prebuild": "yarn clean",
     "build": "babel src --out-dir lib --ignore spec.js,test.js",
@@ -17,6 +14,9 @@
     "debug": "DEBUG=syndox* node lib/index.js **/*.js",
     "prepublishOnly": "yarn build && yarn docs",
     "lint": "standard lib | snazzy"
+  },
+  "lint-staged": {
+    "*.{js,json,css}": ["prettier --write", "git add"]
   },
   "keywords": [],
   "author": "Matt McFarland <contact@mattmcfarland.com>",
@@ -29,9 +29,11 @@
     "@babel/preset-flow": "^7.0.0-beta.32",
     "babel-eslint": "^8.0.2",
     "eslint": "^4.11.0",
-    "eslint-config-standard": "^10.2.1",
     "eslint-plugin-flowtype": "^2.39.1",
-    "flow-bin": "^0.59.0"
+    "flow-bin": "^0.59.0",
+    "husky": "^0.14.3",
+    "lint-staged": "^5.0.0",
+    "prettier": "^1.8.2"
   },
   "dependencies": {
     "big-json": "^1.2.0",
