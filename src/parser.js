@@ -59,6 +59,7 @@ export const fromDB = (key: K): V =>
     .get('db')
     .get(key)
     .value()
+
 /**
  * Writes key value to database
  * @param {K} key write this key
@@ -108,15 +109,6 @@ export const parseCode = (code: string): AST =>
   parseAST(code, fromConfig('parse.options'))
 
 /**
- * Parse an array of code
- * @param {string[]} codeArray - converts each string in codeArray to AST
- * @returns {AST[]} Array of Abstract Syntax Trees
- * @uses parseCode
- */
-export const parseCodeArray = (codeArray: string[]): AST[] =>
-  codeArray.map(parseCode)
-
-/**
  * Logs the current context to the console
  * @param {*} context log this
  * @returns {*} context
@@ -164,9 +156,9 @@ export const contextAsEntry = (key: K): Fn => (context: V): entry => [
  * filepath is key, and the parsed AST is the value.
  * @param {string} filepath path to be read by fs.readFile
  * @returns {Promise<entry>} [filepath, ast]
- * @see openFileForReading
- * @see parseCode
- * @see contextAsEntry
+ * @uses openFileForReading
+ * @uses parseCode
+ * @uses contextAsEntry
  */
 export const parseFile = (filepath: string): Promise<entry> =>
   resolveFile(filepath)
@@ -179,8 +171,8 @@ export const parseFile = (filepath: string): Promise<entry> =>
  * filepath is key, and the raw data is the value.
  * @param {string} filepath path to be read by fs.readFile
  * @returns {Promise<entry>} [filepath, ast]
- * @see openFileForReading
- * @see contextAsEntry
+ * @uses openFileForReading
+ * @uses contextAsEntry
  */
 export const safelyReadFile = (filepath: string): Promise<entry> =>
   resolveFile(filepath)
@@ -192,6 +184,7 @@ export const safelyReadFile = (filepath: string): Promise<entry> =>
  * @param {string} filepath path to be read by fs.readFile
  * @returns {Promise<string>} The resolved file path
  * @see readFiles
+ * @see parseFiles
  */
 export const resolveFile = (filepath: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -207,6 +200,11 @@ export const resolveFile = (filepath: string): Promise<string> => {
   })
 }
 
+/**
+ * performs fs.readfile at utf-8 encoding on the given filepath
+ * @param {string} filepath - fs.readfile this
+ * @returns {string} utf-8 content
+ */
 export const openFileForReading = (filepath: string) =>
   readFile(filepath, 'utf-8')
 
@@ -280,6 +278,11 @@ export const appendContextAsKeysToFileHash = (
 export const convertEntriesToObject = (entries: entry[]): POJO =>
   entries.reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {})
 
+/**
+ * Extracts values from entries
+ * @param {entry[]} entries
+ * @returns {V[]} values
+ */
 export const extractValuesFromEntries = (entries: entry[]): V[] =>
   entries.map(([key, value]) => value)
 
@@ -288,6 +291,11 @@ export const extractValuesFromEntries = (entries: entry[]): V[] =>
  * then reads all the filepaths from the glob,
  * then saves their data to the filehash for each respective file.
  * @returns {void} - context of the promise chain is voided on completion
+ * @uses getFullPathsFromFileHash
+ * @uses readFiles
+ * @uses convertEntriesToObject
+ * @uses appendContextAsKeysToFileHash
+ * @uses voidContext
  */
 export const addFilesContentsToHash = (): Promise<void> =>
   Promise.resolve(getFileHashFromDB())
@@ -302,8 +310,12 @@ export const addFilesContentsToHash = (): Promise<void> =>
  * then reads all the filepaths from the glob,
  * then parses AST and saves to the filehash for each respective file.
  * @returns {void} - context of the promise chain is voided on completion
+ * @uses getFullPathsFromFileHash
+ * @uses parseFiles
+ * @uses convertEntriesToObject
+ * @uses appendContextAsKeysToFileHash
+ * @uses voidContext
  */
-
 export const addASTContentsToHash = (): Promise<void> =>
   Promise.resolve(getFileHashFromDB())
     .then(getFullPathsFromFileHash)
@@ -327,6 +339,7 @@ export const fatalError = (err: Error): void => {
  * @param {string} pattern pattern to resolve
  * @returns {Promise<string>} all matches found from the pattern
  * @throws {Error} If nothing is found
+ * @see processAllGlobPatterns
  */
 export const processGlobPattern = (pattern: string): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -341,7 +354,7 @@ export const processGlobPattern = (pattern: string): Promise<string> =>
  * @param {string} pattern pattern to resolve
  * @returns {Promise<string[]>} all matches found from the pattern
  * @throws {Error} If nothing is found
- * @see processGlobPattern
+ * @uses processGlobPattern
  */
 export const processAllGlobPatterns = (patterns: string[]): Promise<string[]> =>
   Promise.all(patterns.map(processGlobPattern))
@@ -350,6 +363,7 @@ export const processAllGlobPatterns = (patterns: string[]): Promise<string[]> =>
  * Converts resolves the full path of the filepath relative to the current working directory.
  * @param {string} relativePath filepath to resolve
  * @returns {string} fullpath
+ * @uses resolvePath
  */
 export const resolvePathFromCWD = (relativePath: string): string =>
   resolvePath(process.cwd(), relativePath)
@@ -367,6 +381,7 @@ export const resolveAllFilePathsFromCWD = (relativePaths: string[]): string[] =>
  * Creates base filehash for further read/writes, which will include fullpath and rel-path
  * @param {string[]} filepaths - relative paths, full paths will be added to them.
  * @returns {FileHash}
+ * @uses createFileHashItem
  */
 export const createFilesHash = (filepaths: string[]): FileHash =>
   filepaths.reduce(
@@ -380,6 +395,8 @@ export const createFilesHash = (filepaths: string[]): FileHash =>
 /**
  * Creates a file hash item just by given a relative file path.
  * @param {string} filepath
+ * @returns {FileHashItem}
+ * @see createFilesHash
  */
 export const createFileHashItem = (filepath: string): FileHashItem => ({
   fullPath: resolvePathFromCWD(filepath),
@@ -388,24 +405,6 @@ export const createFileHashItem = (filepath: string): FileHashItem => ({
   data: '',
   ast: {},
 })
-
-/**
- * Runs the process of pulling all file definitions from the database, then reading their data.
- */
-export const generateASTs = () => {
-  const fileHash = fromDB('files')
-  const withAST = Object.entries(fileHash).reduce(
-    (hash, [key, value]: entry) => {
-      return Object.assign(hash, {
-        [key]: {
-          ast: safelyReadFile(value.fullPath),
-          ...value,
-        },
-      })
-    },
-    {}
-  )
-}
 
 /**
  * Assigns current context to cache under the given key
@@ -418,11 +417,15 @@ export const assignContextToCache = (key: K) => (context: any) => {
 }
 
 /**
- * Gets a cache value, sets it as context
- * @param {K} key
- * @returns {V} value
+ * Initiailize the DB
+ * @returns {Passthrough} - context of the promise chain is unchanged.
  */
-export const fromCacheToContext = (key: string) => () => cache.get(key)
+export const initializeDB = (): Passthrough => (context: any): Promise<any> =>
+  new Promise(resolve => {
+    initDB()
+      .then(assignContextToCache('db'))
+      .then(() => resolve(context))
+  })
 
 /**
  * Read config vars from .syndoxrc or package.json, return results
@@ -433,17 +436,6 @@ export const readConfig = (): Promise<Config> =>
     cosmiconfig(MODULE_NAME)
       .load(process.cwd())
       .then(result => resolve(result.config))
-  })
-
-/**
- * Initiailize the DB
- * @returns {Passthrough} - context of the promise chain is unchanged.
- */
-export const initializeDB = (): Passthrough => (context: any): Promise<any> =>
-  new Promise(resolve => {
-    initDB()
-      .then(assignContextToCache('db'))
-      .then(() => resolve(context))
   })
 
 /**
