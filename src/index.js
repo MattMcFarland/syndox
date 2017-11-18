@@ -17,7 +17,8 @@ const {
   flatten,
   processAllGlobPatterns,
   saveContextToFileHash,
-  status
+  status,
+  logContext
 } = parser
 
 // #endRegion Initialization
@@ -33,7 +34,8 @@ const program = pipe(
   dedupe,
   createFilesHash,
   saveContextToFileHash,
-  addFilesContentsToHash
+  addFilesContentsToHash,
+  logContext
 )
 
 program(args)
