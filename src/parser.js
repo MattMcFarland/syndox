@@ -21,7 +21,7 @@ import { promisify } from 'util'
 // $FlowFixMe
 const readFile = promisify(fs.readFile)
 
-//# region Type Definitions
+// #region Type Definitions
 /** @typedef {string} K the key of a value in a key-value pair*/
 type K = string
 /** @typedef {any} V the value in a key-value pair*/
@@ -46,7 +46,7 @@ type Fn = (any:any) => any
 type Config = {
   out: string
 }
-//# endregion
+// #endregion Type Definitions
 
 // #region Unary Functions
 
