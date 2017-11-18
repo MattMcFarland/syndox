@@ -5,7 +5,7 @@
   "license": "MIT",
   "files": ["README.md", "docs", "lib"],
   "scripts": {
-    "precommit": "flow && lint-staged",
+    "precommit": "lint-staged",
     "clean": "rm -rf out docs lib && mkdir docs lib",
     "prebuild": "flow && yarn clean",
     "build": "babel src --out-dir lib --ignore spec.js,test.js",
@@ -16,7 +16,7 @@
     "prettier": "prettier --write src/*.{js,json,yaml,.prettierrc,.babelrc,.syndoxrc}"
   },
   "lint-staged": {
-    "*.{js,json,css}": ["prettier --write", "git add"]
+    "*.{js,json,css}": ["flow", "prettier --write", "git add"]
   },
   "keywords": [],
   "author": "Matt McFarland <contact@mattmcfarland.com>",
