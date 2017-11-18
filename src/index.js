@@ -3,7 +3,9 @@ const pipe = require('promise.pipe')
 const Logger = require('./logger')
 Logger.start()
 
-const parser = require('debug').enabled ? require('./debugger')() : require('./parser')
+const parser = require('debug').enabled
+  ? require('./debugger')()
+  : require('./parser')
 
 const {
   initializeDB,
