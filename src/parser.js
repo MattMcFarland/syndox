@@ -13,6 +13,7 @@ import glob from 'glob'
 import initDB from './db'
 import { Transform } from 'stream'
 import { promisify } from 'util'
+
 const readFile = promisify(fs.readFile)
 
 // #region Type Definitions
