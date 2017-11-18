@@ -1,3 +1,4 @@
+// not using flow or es6 imports as this mutates parser
 const Debug = require('debug')
 const parser = require('./parser')
 

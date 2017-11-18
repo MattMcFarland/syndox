@@ -1,7 +1,10 @@
+import pipe from 'promise.pipe'
+import Logger from './logger'
+
 // #region Initialization
-const pipe = require('promise.pipe')
-const Logger = require('./logger')
 Logger.start()
+
+// use common js require
 
 const parser = require('debug').enabled
   ? require('./debugger')()
@@ -19,6 +22,7 @@ const {
   saveContextToFileHash,
   status,
   logContext,
+  addASTContentsToHash,
 } = parser
 
 // #endRegion Initialization
@@ -35,7 +39,7 @@ const program = pipe(
   createFilesHash,
   saveContextToFileHash,
   addFilesContentsToHash,
-  logContext
+  addASTContentsToHash
 )
 
 program(args)

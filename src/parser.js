@@ -33,6 +33,8 @@ type FileHashItem = {
   id: string,
   index: string,
 }
+/** @typedef POJO Plain old Javascript Object, AKA Object Literal */
+type POJO = { [K]: V }
 /** @typedef AST Abstract Syntax Tree */
 type AST = { ...AST }
 /** @typedef Passthrough returns the original context */
@@ -91,7 +93,11 @@ export const flatten = (arr: any[]): any[] => [].concat(...arr)
  * @param {string} code - code will be converted to AST
  * @returns {AST} Abstract Syntax Tree
  */
-export const parseCode = (code: string): AST => parseAST(code)
+export const parseCode = (code: string): AST =>
+  parseAST(code, {
+    sourceType: 'module',
+    plugins: ['flow', 'objectRestSpread'],
+  })
 
 /**
  * Parse an array of code
@@ -136,20 +142,56 @@ export const setContext = (newContext: any) => (): Promise<any> =>
 export const voidContext = setContext(undefined)
 
 /**
+ * Writes the context of a promise chain to the given key as an entry ( [key, context] )
+ * @param {string} key
+ * @returns {entry}
+ */
+export const contextAsEntry = (key: K): Fn => (context: V): entry => [
+  key,
+  context,
+]
+
+/**
+ * Opens file, parses it, then creates an entry where the
+ * filepath is key, and the parsed AST is the value.
+ * @param {string} filepath path to be read by fs.readFile
+ * @returns {Promise<entry>} [filepath, ast]
+ * @see openFileForReading
+ * @see parseCode
+ * @see contextAsEntry
+ */
+export const parseFile = (filepath: string): Promise<entry> =>
+  resolveFile(filepath)
+    .then(openFileForReading)
+    .then(parseCode)
+    .then(contextAsEntry(filepath))
+
+/**
+ * Opens file, reads it, then creates an entry where the
+ * filepath is key, and the raw data is the value.
+ * @param {string} filepath path to be read by fs.readFile
+ * @returns {Promise<entry>} [filepath, ast]
+ * @see openFileForReading
+ * @see contextAsEntry
+ */
+export const safelyReadFile = (filepath: string): Promise<entry> =>
+  resolveFile(filepath)
+    .then(openFileForReading)
+    .then(contextAsEntry(filepath))
+
+/**
  * Only attempts to read real files, discarding directories, etc.
  * @param {string} filepath path to be read by fs.readFile
- * @returns {Promise<entry>} A promise of the file contents.
+ * @returns {Promise<string>} The resolved file path
  * @see readFiles
  */
-export const safelyReadFile = (filepath: string): Promise<entry> => {
+export const resolveFile = (filepath: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     fs.stat(filepath, (err, stats) => {
       if (err) return reject(err)
       if (stats.isFile()) {
-        console.log('read', filepath)
-        return readFile(filepath, 'utf-8').then(data => {
-          resolve([filepath, data])
-        })
+        console.log('resolve', filepath)
+        return resolve(filepath)
       }
       console.warn('skip', filepath)
       return
@@ -157,10 +199,22 @@ export const safelyReadFile = (filepath: string): Promise<entry> => {
   })
 }
 
+export const openFileForReading = (filepath: string) =>
+  readFile(filepath, 'utf-8')
+
 /**
  * Read the contents of all files in the given array
  * @param {string[]} filesArray - array of full paths to files
- * @returns {Promise<string[]>} - A promise when all files have been read
+ * @returns {Promise<entry[]>} - A promise when all files have been read
+ * @uses safelyReadFile
+ */
+export const parseFiles = (filesArray: string[]): Promise<entry[]> =>
+  Promise.all(filesArray.map(parseFile))
+
+/**
+ * Read the contents of all files in the given array
+ * @param {string[]} filesArray - array of full paths to files
+ * @returns {Promise<entry[]>} - A promise when all files have been read
  * @uses safelyReadFile
  */
 export const readFiles = (filesArray: string[]): Promise<entry[]> =>
@@ -202,7 +256,7 @@ export const appendContextAsKeysToFileHash = (
   return Promise.resolve(
     Object.entries(fileHash).reduce((hash, [key, value]: entry) => {
       const fullPath = value.fullPath
-      value.data = context[fullPath]
+      value[keyToAppend] = context[fullPath]
       return hash
     }, {})
   )
@@ -213,10 +267,13 @@ export const appendContextAsKeysToFileHash = (
 /**
  * Converts entries to a POJO
  * @param {entry[]} entries
- * @returns {any} converted entries
+ * @returns {POJO} converted entries
  */
-export const convertEntriesToObject = (entries: entry[]): any =>
+export const convertEntriesToObject = (entries: entry[]): POJO =>
   entries.reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {})
+
+export const extractValuesFromEntries = (entries: entry[]): V[] =>
+  entries.map(([key, value]) => value)
 
 /**
  * Multistep procedure which takes the filehash from the db,
@@ -224,12 +281,27 @@ export const convertEntriesToObject = (entries: entry[]): any =>
  * then saves their data to the filehash for each respective file.
  * @returns {void} - context of the promise chain is voided on completion
  */
-export const addFilesContentsToHash = (): Promise<any> =>
+export const addFilesContentsToHash = (): Promise<void> =>
   Promise.resolve(getFileHashFromDB())
     .then(getFullPathsFromFileHash)
     .then(readFiles)
     .then(convertEntriesToObject)
     .then(appendContextAsKeysToFileHash('data'))
+    .then(voidContext)
+
+/**
+ * Multistep procedure which takes the filehash from the db,
+ * then reads all the filepaths from the glob,
+ * then parses AST and saves to the filehash for each respective file.
+ * @returns {void} - context of the promise chain is voided on completion
+ */
+
+export const addASTContentsToHash = (): Promise<void> =>
+  Promise.resolve(getFileHashFromDB())
+    .then(getFullPathsFromFileHash)
+    .then(parseFiles)
+    .then(convertEntriesToObject)
+    .then(appendContextAsKeysToFileHash('ast'))
     .then(voidContext)
 
 /**
@@ -368,8 +440,9 @@ export const readConfig = (): Promise<Config> =>
  * @returns {Promise<Config>}
  */
 
-export const ReadConfigToCache = (): Promise<Config> =>
-  readConfig().then(assignContextToCache('config'))
+export const readConfigToCache = (): Passthrough => (
+  context: any
+): Promise<any> => readConfig().then(assignContextToCache('config'))
 
 /**
  * Initiailize the DB
