@@ -1,1 +1,1 @@
-export const MODULE_NAME = 'syndox'
+export const MODULE_NAME = "syndox"

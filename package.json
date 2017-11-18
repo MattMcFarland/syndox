@@ -13,6 +13,7 @@
     "predebug": "yarn build",
     "debug": "DEBUG=syndox* node lib/index.js **/*.js",
     "prepublishOnly": "yarn build && yarn docs",
+    "prettier": "prettier --write src/*.{js,json,css}",
     "lint": "standard lib | snazzy"
   },
   "lint-staged": {

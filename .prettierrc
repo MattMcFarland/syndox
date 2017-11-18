@@ -1,3 +1,13 @@
 # .prettierrc
 printWidth: 100
-parser: flow
+semi: false
+overrides:
+- files: "*.js"
+  options:
+    parser: flow
+- files: "*.json"
+  options:
+    parser: json
+- files: ".prettierrc"
+  options:
+    parser: yaml

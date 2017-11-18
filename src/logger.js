@@ -1,12 +1,12 @@
-const logger = require('npmlog')
-const debug = require('debug')('syndox')
-const util = require('util')
-const pkg = require('../package.json')
+const logger = require("npmlog")
+const debug = require("debug")("syndox")
+const util = require("util")
+const pkg = require("../package.json")
 
-logger.heading = 'syndox'
-logger.info('using', `syndox@${pkg.version}`)
+logger.heading = "syndox"
+logger.info("using", `syndox@${pkg.version}`)
 
-const vanilla = (consoleObject) => consoleObject.log
+const vanilla = consoleObject => consoleObject.log
 
 module.exports.start = () => {
   const _log = vanilla(console)
@@ -15,7 +15,7 @@ module.exports.start = () => {
   console.log = (...args) => logger.info(...args)
   console.info = (...args) => logger.info(...args)
   console.warn = (...args) => logger.warn(...args)
-  console.error = (...args) => logger.error('ERR', ...args)
+  console.error = (...args) => logger.error("ERR", ...args)
   console.debug = (...args) => debug(...args)
   return logger
 }
